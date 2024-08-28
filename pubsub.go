@@ -40,6 +40,7 @@ func NewServer[T any](ctx context.Context) *Server[T] {
 				subscribers[subscriber] = struct{}{}
 			case subscriber := <-unsubscribeCh:
 				delete(subscribers, subscriber)
+				close(subscriber)
 			}
 		}
 	}()
