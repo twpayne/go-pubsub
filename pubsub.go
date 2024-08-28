@@ -3,17 +3,20 @@ package pubsub
 
 import "context"
 
-type Server[T any] struct {
+// A Topic is a pub-sub server that handles messages of type T.
+type Topic[T any] struct {
 	publishCh     chan<- T
 	subscribeCh   chan<- chan<- T
 	unsubscribeCh chan<- chan<- T
 }
 
-func NewServer[T any](ctx context.Context) *Server[T] {
+// NewTopic returns a new Topic. It will terminate when ctx is done or when
+// Close is called.
+func NewTopic[T any](ctx context.Context) *Topic[T] {
 	publishCh := make(chan T)
 	subscribeCh := make(chan chan<- T)
 	unsubscribeCh := make(chan chan<- T)
-	s := &Server[T]{
+	t := &Topic[T]{
 		publishCh:     publishCh,
 		subscribeCh:   subscribeCh,
 		unsubscribeCh: unsubscribeCh,
@@ -44,21 +47,27 @@ func NewServer[T any](ctx context.Context) *Server[T] {
 			}
 		}
 	}()
-	return s
+	return t
 }
 
-func (s *Server[T]) Close() {
-	close(s.publishCh)
+// Close closes t.
+func (t *Topic[T]) Close() {
+	close(t.publishCh)
 }
 
-func (s *Server[T]) Publish(value T) {
-	s.publishCh <- value
+// Publish publishes value to all subscribers.
+func (t *Topic[T]) Publish(value T) {
+	t.publishCh <- value
 }
 
-func (s *Server[T]) Subscribe(subscriber chan<- T) {
-	s.subscribeCh <- subscriber
+// Subscribe adds ch as a subscriber. t takes ownership of ch and will close it
+// when t terminates.
+func (t *Topic[T]) Subscribe(ch chan<- T) {
+	t.subscribeCh <- ch
 }
 
-func (s *Server[T]) Unsubscribe(subscriber chan<- T) {
-	s.unsubscribeCh <- subscriber
+// Unsubscribe removes ch as a subscriber. t will close ch when the
+// unsubscription is complete.
+func (t *Topic[T]) Unsubscribe(ch chan<- T) {
+	t.unsubscribeCh <- ch
 }
