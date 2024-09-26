@@ -56,18 +56,33 @@ func (t *Topic[T]) Close() {
 }
 
 // Publish publishes value to all subscribers.
-func (t *Topic[T]) Publish(value T) {
-	t.publishCh <- value
+func (t *Topic[T]) Publish(ctx context.Context, value T) error {
+	select {
+	case <-ctx.Done():
+		return context.Cause(ctx)
+	case t.publishCh <- value:
+		return nil
+	}
 }
 
 // Subscribe adds ch as a subscriber. t takes ownership of ch and will close it
 // when t terminates.
-func (t *Topic[T]) Subscribe(ch chan<- T) {
-	t.subscribeCh <- ch
+func (t *Topic[T]) Subscribe(ctx context.Context, ch chan<- T) error {
+	select {
+	case <-ctx.Done():
+		return context.Cause(ctx)
+	case t.subscribeCh <- ch:
+		return nil
+	}
 }
 
 // Unsubscribe removes ch as a subscriber. t will close ch when the
 // unsubscription is complete.
-func (t *Topic[T]) Unsubscribe(ch chan<- T) {
-	t.unsubscribeCh <- ch
+func (t *Topic[T]) Unsubscribe(ctx context.Context, ch chan<- T) error {
+	select {
+	case <-ctx.Done():
+		return context.Cause(ctx)
+	case t.unsubscribeCh <- ch:
+		return nil
+	}
 }

@@ -12,11 +12,11 @@ ctx := context.Background()
 topic := pubsub.NewTopic[int](ctx)
 
 ch := make(chan int)
-topic.Subscribe(ch)
+topic.Subscribe(ctx, ch)
 go func() {
     defer topic.Close()
     for i := range 3 {
-        topic.Publish(i)
+        topic.Publish(ctx, i)
     }
 }()
 
