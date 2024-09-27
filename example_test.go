@@ -13,11 +13,11 @@ func ExampleTopic() {
 	topic := pubsub.NewTopic[int](ctx)
 
 	ch := make(chan int)
-	topic.Subscribe(ctx, ch)
+	topic.Subscribe(ch)
 	go func() {
 		defer topic.Close()
 		for i := range 3 {
-			topic.Publish(ctx, i)
+			topic.Publish(i)
 		}
 	}()
 
