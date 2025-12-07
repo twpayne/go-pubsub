@@ -55,7 +55,7 @@ func (t *Topic[T]) Close() {
 	close(t.publishCh)
 }
 
-// PublishContext publishes value to all subscribers.
+// Publish publishes value to all subscribers.
 func (t *Topic[T]) Publish(value T) {
 	t.publishCh <- value
 }
